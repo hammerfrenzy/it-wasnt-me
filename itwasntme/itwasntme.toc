@@ -4,3 +4,5 @@
 ## Version: 0.1
 
 main.lua
+group_utility.lua
+pending_rolls.lua

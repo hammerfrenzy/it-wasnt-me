@@ -3,6 +3,15 @@
 -- at least when they're thrown in ad hoc like this.
 
 -----------------------------------------------
+-- The answer to splitting functionality across files
+-- seems to be "everything is global so just do"
+-- https://authors.curseforge.com/forums/world-of-warcraft/general-chat/lua-code-discussion/224909-how-to-spread-code-over-files
+-----------------------------------------------
+
+GroupUtility = {}
+PendingRolls = {}
+
+-----------------------------------------------
 -- MAIN BLAME LOGIC
 -----------------------------------------------
 
@@ -33,7 +42,6 @@ local function DoBlameRoll(startedByName)
     -- If you triggered the roll, don't roll again.
     local myName = UnitName('player')
     if startedByName == myName then
-        print('I started this roll, returning early.')
         return
     end
 
@@ -90,11 +98,7 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender, ...)
 
     -- Split the message into its event & parameters.
     -- The first parameter should always be our custom event.
-    print('~~~~~')
     local iwmEvent, parameters = strsplit(' ', message, 2)
-    print(iwmEvent)
-    print(parameters)
-
     if iwmEvent == startBlameToken then
         DoBlameRoll(parameters)
     end
