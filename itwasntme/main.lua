@@ -2,12 +2,48 @@
 -- Also, apparently Lua wants functions to be defined before they're used,
 -- at least when they're thrown in ad hoc like this.
 
+-----------------------------------------------
+-- MAIN BLAME LOGIC
+-----------------------------------------------
+
 -- Register our addon's chat prefix
 local addonMessagePrefix = 'IWM_CHAT_PREFIX'
 C_ChatInfo.RegisterAddonMessagePrefix(addonMessagePrefix)
 
+-- Initiates a raid-wide blame roll by sending an addon
+-- message to the raid channel with the blame start token.
+local startBlameToken = 'IWM_BLAME_START'
 local function StartBlameProcess()
-    SendChatMessage('it wasn\'t me.', 'SAY')
+    -- TODO: Update to use raid channel when we can test that
+    local myName = UnitName('player')
+    local addonPayload = startBlameToken .. ' ' .. myName
+    local channel = 'GUILD'
+    SendChatMessage('Okay wise guys, whose fault is this?', channel)
+    C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, channel)
+end
+
+-- When the raid leader initiates a blame roll,
+-- generate a random d100 value, and then send
+-- it via addon message in the format
+-- [rollToken] [playerName] [rollValue]
+-- so that we can parse the roll & who rolled it.
+-- Put a humorous message in the visible chat.
+local rollBlameToken = 'IWM_BLAME_ROLL'
+local function DoBlameRoll(startedByName)
+    -- If you triggered the roll, don't roll again.
+    local myName = UnitName('player')
+    if startedByName == myName then
+        print('I started this roll, returning early.')
+        return
+    end
+
+    local roll = math.random(100)
+    local addonPayload = rollBlameToken .. ' ' .. myName .. ' ' .. roll
+    -- TODO: Update to use raid channel when we can test that
+    local channel = 'GUILD'
+
+    SendChatMessage('Wasn\'t me, boss', channel)
+    C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, channel)
 end
 
 -----------------------------------------------
@@ -16,9 +52,7 @@ end
 
 -- We'll register this later to run when our slash command is recognized.
 local function SlashCommandHandler(msg, _) -- _ here is 'editBox'
-    if msg == 'blame' then
-        StartBlameProcess()
-    end
+    StartBlameProcess()
 end
 
 -- Name the slash command. When the game sees this /[command] input,
@@ -41,32 +75,28 @@ local frame = CreateFrame('Frame')
 -- A container to hold events we want to register
 local events = {}
 
--- Simply for testing purposes
-function events:PLAYER_ENTERING_WORLD(isLogin, isReload)
-    if isLogin or isReload then
-        local playerName = UnitName('player')
-
-        local success = C_ChatInfo
-            .SendAddonMessage(addonMessagePrefix,
-                'BROUGHT TO YOU BY SLEEP DEPRIVATION!',
-                'WHISPER',
-                playerName)
-
-        if success then
-            print('it was sent')
-        else
-            print('ADDON CHAT NOT SENT')
-        end
-    end
-end
-
 -- Fired when an addon sends a chat message
 -- It sounds like these are supposed to be visible to players,
 -- but I haven't been able to verify that. I don't see the
 -- whisper that is sent as part of PLAYER_ENTERING_WORLD.
 function events:CHAT_MSG_ADDON(prefix, message, channel, sender, ...)
-    if prefix == addonMessagePrefix then
-        print(sender .. ' sent \'' .. message .. '\' ' .. ' in ' .. channel)
+    -- Filter out other addon's messages
+    if prefix ~= addonMessagePrefix then
+        return
+    end
+
+    -- Debug log our addon's events
+    print(sender .. ' sent \'' .. message .. '\' ' .. ' in ' .. channel)
+
+    -- Split the message into its event & parameters.
+    -- The first parameter should always be our custom event.
+    print('~~~~~')
+    local iwmEvent, parameters = strsplit(' ', message, 2)
+    print(iwmEvent)
+    print(parameters)
+
+    if iwmEvent == startBlameToken then
+        DoBlameRoll(parameters)
     end
 end
 
