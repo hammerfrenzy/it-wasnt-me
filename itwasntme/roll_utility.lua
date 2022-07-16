@@ -10,7 +10,7 @@ function IWM_RollUtility.EmoteForRoll(roll)
     elseif roll <= 49 then
         message = 'throws the die as hard as they can... but only get a ' .. roll .. '.'
     elseif roll <= 69 then
-        message = 'makes an OK roll and gets an OK result: ' .. roll .. '.'
+        message = 'makes an OK roll and gets an OK result of ' .. roll .. '.'
     elseif roll <= 89 then
         message = 'rolls with precision! A ' .. roll .. '!'
     else

@@ -2,59 +2,11 @@
 -- Also, apparently Lua wants functions to be defined before they're used,
 -- at least when they're thrown in ad hoc like this.
 
+-- Group Utility functions attach to this
+IWM_GroupUtility = {}
+
+-- Roll Utility functions attach to this
 IWM_RollUtility = {}
-
------------------------------------------------
--- GROUP INFO UTILITIES
------------------------------------------------
-
-local function GetGroupMembers()
-    local members = {}
-    for i = 1, MAX_RAID_MEMBERS, 1 do
-        local name = GetRaidRosterInfo(i)
-        if name ~= nil then
-            members[i] = name
-        end
-    end
-
-    return members
-end
-
------------------------------------------------
--- ROLL UTILITIES
------------------------------------------------
-
--- Sends an emote appriate for the given roll value.
--- local function EmoteForRoll(roll)
---     local message = ''
-
---     -- General case messages
---     if roll <= 9 then
---         message = 'fumbles the die! It comes up ' .. roll .. '!'
---     elseif roll <= 29 then
---         message = 'rolls the die off the table. After picking it up, it\'s only a ' .. roll .. '.'
---     elseif roll <= 49 then
---         message = 'throws the die as hard as they can... but only get a ' .. roll '.'
---     elseif roll <= 69 then
---         message = 'makes an OK roll and gets an OK result: ' .. roll '.'
---     elseif roll <= 89 then
---         message = 'rolls with precision! A ' .. roll .. '!'
---     else
---         message = 'has a gleam in their eye. The die shows ' .. roll .. '!'
---     end
-
---     -- Special messages
---     if roll == 69 then
---         message = 'unleashes a secret technique! The die rolls... it\'s a 69!!!'
---     end
-
---     if roll == 100 then
---         message = 'scores a critical hit! It\'s a perfect 100!'
-
---     end
-
---     SendChatMessage(message, 'EMOTE')
--- end
 
 -----------------------------------------------
 -- MAIN BLAME LOGIC
@@ -72,6 +24,7 @@ local function StartBlameProcess()
     local myName = UnitName('player')
     local addonPayload = startBlameToken .. ' ' .. myName
     local channel = 'RAID' -- will change to party if not in raid
+    print('sending blame start')
     --SendChatMessage('Okay wise guys, whose fault is this?', channel)
     C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, channel)
 end
@@ -86,11 +39,10 @@ local rollBlameToken = 'IWM_BLAME_ROLL'
 local function MakeBlameRoll()
     local roll = math.random(100)
     IWM_RollUtility.EmoteForRoll(roll)
-    -- TODO: Update to use raid channel when we can test that?
     local channel = 'RAID' -- will change to party if not in raid
     local addonPayload = rollBlameToken .. ' ' .. name .. ' ' .. roll
     -- print('local addon payload: ' .. addonPayload)
-    local success = C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, channel)
+    C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, channel)
     -- print('addon chat sent')
     -- if success then
     -- print('posting my local roll succeeded')
@@ -139,13 +91,16 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender, ...)
     end
 
     -- Debug log our addon's events
-    -- print(sender .. ' sent \'' .. message .. '\' ' .. ' in ' .. channel)
+    print(sender .. ' sent \'' .. message .. '\' ' .. ' in ' .. channel)
 
     -- Split the message into its event & parameters.
     -- The first parameter should always be our custom event.
     local iwmEvent, parameters = strsplit(' ', message, 2)
     if iwmEvent == startBlameToken then
-        MakeBlameRoll()
+        local shouldRespondToBlame = IWM_GroupUtility.ShouldRespondToBlameRequest(parameters)
+        if shouldRespondToBlame then
+            MakeBlameRoll()
+        end
     end
 end
 
