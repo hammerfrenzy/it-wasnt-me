@@ -25,9 +25,9 @@ C_ChatInfo.RegisterAddonMessagePrefix(addonMessagePrefix)
 local startBlameToken = 'IWM_BLAME_START'
 local function StartBlameProcess()
     IWM_RollUtility.ResetRollLog()
-    SendChatMessage('It\'s blamin\' time.', 'PARTY')
+    local chatChannel = IWM_GroupUtility.GetAppropriateChatChannel()
+    SendChatMessage('It\'s blamin\' time.', chatChannel)
 
-    -- local myName = UnitName('player')
     local addonPayload = startBlameToken .. ' ' .. myName
     C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, addonChannel)
 end
@@ -36,7 +36,8 @@ end
 local function PerformEndCeremony()
     local lowestRollerNames = IWM_RollUtility.GetLowestRollerNames()
     local message = 'Looks like ' .. lowestRollerNames .. ' is our clown.'
-    SendChatMessage(message, 'PARTY')
+    local chatChannel = IWM_GroupUtility.GetAppropriateChatChannel()
+    SendChatMessage(message, chatChannel)
 end
 
 -- When the raid leader initiates a blame roll,
@@ -48,7 +49,6 @@ end
 local rollBlameToken = 'IWM_BLAME_ROLL'
 local function MakeBlameRoll(initiatedByName)
     local roll = math.random(100)
-    -- local rolledByName = UnitName('player')
     local addonPayload = rollBlameToken .. ' ' .. initiatedByName .. ' ' .. myName .. ' ' .. roll
     C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, addonChannel)
     IWM_RollUtility.EmoteForRoll(roll)

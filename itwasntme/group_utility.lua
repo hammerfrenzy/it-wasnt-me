@@ -31,3 +31,11 @@ function IWM_GroupUtility.ShouldRespondToBlameRequest(fromName)
         return false
     end
 end
+
+function IWM_GroupUtility.GetAppropriateChatChannel()
+    if IsInRaid() then
+        return 'RAID'
+    elseif IsInGroup() then
+        return 'PARTY'
+    end
+end
