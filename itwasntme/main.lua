@@ -12,43 +12,46 @@ IWM_RollUtility = {}
 -- MAIN BLAME LOGIC
 -----------------------------------------------
 
+local myName = UnitName('player')
+
 -- Register our addon's chat prefix
+
 local addonMessagePrefix = 'IWM_CHAT_PREFIX'
+local addonChannel = 'RAID'
 C_ChatInfo.RegisterAddonMessagePrefix(addonMessagePrefix)
 
 -- Initiates a raid-wide blame roll by sending an addon
 -- message to the raid channel with the blame start token.
 local startBlameToken = 'IWM_BLAME_START'
 local function StartBlameProcess()
-    -- TODO: Update to use raid channel when we can test that?
-    local myName = UnitName('player')
+    IWM_RollUtility.ResetRollLog()
+    SendChatMessage('It\'s blamin\' time.', 'PARTY')
+
+    -- local myName = UnitName('player')
     local addonPayload = startBlameToken .. ' ' .. myName
-    local channel = 'RAID' -- will change to party if not in raid
-    print('sending blame start')
-    --SendChatMessage('Okay wise guys, whose fault is this?', channel)
-    C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, channel)
+    C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, addonChannel)
+end
+
+-- Sends a message for everyone to poke fun at the 'loser'
+local function PerformEndCeremony()
+    local lowestRollerNames = IWM_RollUtility.GetLowestRollerNames()
+    local message = 'Looks like ' .. lowestRollerNames .. ' is our clown.'
+    SendChatMessage(message, 'PARTY')
 end
 
 -- When the raid leader initiates a blame roll,
 -- generate a random d100 value, and then send
 -- it via addon message in the format
--- [rollToken] [playerName] [rollValue]
+-- [rollToken] [initiatedByName] [rolledByName] [rollValue]
 -- so that we can parse the roll & who rolled it.
 -- Make an emote based on the roll.
 local rollBlameToken = 'IWM_BLAME_ROLL'
-local function MakeBlameRoll()
+local function MakeBlameRoll(initiatedByName)
     local roll = math.random(100)
+    -- local rolledByName = UnitName('player')
+    local addonPayload = rollBlameToken .. ' ' .. initiatedByName .. ' ' .. myName .. ' ' .. roll
+    C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, addonChannel)
     IWM_RollUtility.EmoteForRoll(roll)
-    local channel = 'RAID' -- will change to party if not in raid
-    local addonPayload = rollBlameToken .. ' ' .. name .. ' ' .. roll
-    -- print('local addon payload: ' .. addonPayload)
-    C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, channel)
-    -- print('addon chat sent')
-    -- if success then
-    -- print('posting my local roll succeeded')
-    -- else
-    -- print('posting my local roll failed')
-    -- end
 end
 
 -----------------------------------------------
@@ -91,15 +94,25 @@ function events:CHAT_MSG_ADDON(prefix, message, channel, sender, ...)
     end
 
     -- Debug log our addon's events
-    print(sender .. ' sent \'' .. message .. '\' ' .. ' in ' .. channel)
+    -- print(sender .. ' sent \'' .. message .. '\' ' .. ' in ' .. channel)
 
     -- Split the message into its event & parameters.
     -- The first parameter should always be our custom event.
     local iwmEvent, parameters = strsplit(' ', message, 2)
     if iwmEvent == startBlameToken then
-        local shouldRespondToBlame = IWM_GroupUtility.ShouldRespondToBlameRequest(parameters)
+        local initiatedBy = parameters -- start token is just the name
+        local shouldRespondToBlame = IWM_GroupUtility.ShouldRespondToBlameRequest(initiatedBy)
         if shouldRespondToBlame then
-            MakeBlameRoll()
+            MakeBlameRoll(initiatedBy)
+        end
+    elseif iwmEvent == rollBlameToken then
+        -- blame tokens are INITIATED_BY, ROLLING_PLAYER, ROLL
+        local initiatedByName, playerName, roll = strsplit(' ', parameters)
+        if initiatedByName == myName then -- only log rolls you asked for
+            local isGroupDoneRolling = IWM_RollUtility.LogRollForPlayer(roll, playerName)
+            if isGroupDoneRolling then
+                PerformEndCeremony()
+            end
         end
     end
 end
