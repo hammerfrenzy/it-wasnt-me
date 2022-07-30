@@ -20,24 +20,24 @@ local addonMessagePrefix = 'IWM_CHAT_PREFIX'
 local addonChannel = 'RAID'
 C_ChatInfo.RegisterAddonMessagePrefix(addonMessagePrefix)
 
+-- Sends a message for everyone to poke fun at the 'loser'
+local function PerformEndCeremony()
+    local lowestRollerNames = IWM_RollUtility.GetLowestRollerNames()
+    local message = 'Everything is ' .. lowestRollerNames .. '\'s fault'
+    local chatChannel = IWM_GroupUtility.GetAppropriateChatChannel()
+    SendChatMessage(message, chatChannel)
+end
+
 -- Initiates a raid-wide blame roll by sending an addon
 -- message to the raid channel with the blame start token.
 local startBlameToken = 'IWM_BLAME_START'
 local function StartBlameProcess()
     IWM_RollUtility.ResetRollLog()
     local chatChannel = IWM_GroupUtility.GetAppropriateChatChannel()
-    SendChatMessage('It\'s blamin\' time.', chatChannel)
+    SendChatMessage('It wasn\'t me.', chatChannel)
 
     local addonPayload = startBlameToken .. ' ' .. myName
     C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, addonChannel)
-end
-
--- Sends a message for everyone to poke fun at the 'loser'
-local function PerformEndCeremony()
-    local lowestRollerNames = IWM_RollUtility.GetLowestRollerNames()
-    local message = 'Looks like ' .. lowestRollerNames .. ' is our clown.'
-    local chatChannel = IWM_GroupUtility.GetAppropriateChatChannel()
-    SendChatMessage(message, chatChannel)
 end
 
 -- When the raid leader initiates a blame roll,
@@ -45,13 +45,13 @@ end
 -- it via addon message in the format
 -- [rollToken] [initiatedByName] [rolledByName] [rollValue]
 -- so that we can parse the roll & who rolled it.
--- Make an emote based on the roll.
+-- Send a message to chat based on the roll.
 local rollBlameToken = 'IWM_BLAME_ROLL'
 local function MakeBlameRoll(initiatedByName)
     local roll = math.random(100)
     local addonPayload = rollBlameToken .. ' ' .. initiatedByName .. ' ' .. myName .. ' ' .. roll
     C_ChatInfo.SendAddonMessage(addonMessagePrefix, addonPayload, addonChannel)
-    IWM_RollUtility.EmoteForRoll(roll)
+    IWM_RollUtility.SendChatForRoll(roll)
 end
 
 -----------------------------------------------

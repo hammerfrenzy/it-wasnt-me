@@ -1,0 +1,14 @@
+{
+    "releases": [
+        {
+            "filename": "itwasntme.zip",
+            "nolib": true,
+            "metadata": [
+                {
+                    "flavor": "mainline",
+                    "interface": 90205
+                }
+            ]
+        }
+    ]
+}

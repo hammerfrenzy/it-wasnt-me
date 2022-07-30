@@ -37,5 +37,7 @@ function IWM_GroupUtility.GetAppropriateChatChannel()
         return 'RAID'
     elseif IsInGroup() then
         return 'PARTY'
+    else
+        return 'SAY'
     end
 end
