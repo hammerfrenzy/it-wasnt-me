@@ -1,7 +1,7 @@
-## Interface: 90205
+## Interface: 100000
 ## Title: It Wasn't Me
 ## Author: Arkkon
-## Version: 0.1
+## Version: 0.2
 
 main.lua
 roll_utility.lua
