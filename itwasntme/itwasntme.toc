@@ -1,4 +1,4 @@
-## Interface: 100000
+## Interface: 110005
 ## Title: It Wasn't Me
 ## Author: Arkkon
 ## Version: 0.3

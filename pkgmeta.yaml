@@ -1,0 +1,7 @@
+package-as: ItWasNotMe
+
+move-folders: 
+    ItWasNotMe/itwasntme: ItWasNotMe
+
+ignore:
+- "*.json"
